@@ -80,16 +80,16 @@ dependencies {
     //runtime "curse.maven:inventory-tweaks:${version_it}" // Causes issues
     provided "curse.maven:hwyla-253449:${version_hwyla}"
     runtime "mcjty.theoneprobe:TheOneProbe-${version_mc_no_patch}:${version_top}"
-    runtime("curse.maven:thaumic-jei:${version_tjei}") {
+    runtime("curse.maven:thaumic-jei-285492:${version_tjei}") {
         transitive = false
     }
-    runtime("curse.maven:redstone-flux:${version_rf}") {
+    runtime("curse.maven:redstone-flux-270789:${version_rf}") {
         transitive = false
     }
     runtime("com.brandon3055.brandonscore:BrandonsCore:${version_bc}:universal") {
         transitive = false
     }
-    runtime("curse.maven:codechickenlib:${version_ccl}") {
+    runtime("curse.maven:codechickenlib-242818:${version_ccl}") {
         transitive = false
     }
     runtime("com.brandon3055.projectintelligence:ProjectIntelligence:${version_pi}:universal") {
