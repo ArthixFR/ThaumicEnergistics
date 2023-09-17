@@ -2,14 +2,30 @@ package thaumicenergistics.part;
 
 import appeng.api.config.RedstoneMode;
 import appeng.api.config.Settings;
+import appeng.api.definitions.IDefinitions;
+import appeng.api.implementations.items.IMemoryCard;
+import appeng.api.implementations.items.MemoryCardMessages;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.ticking.TickRateModulation;
+import appeng.api.util.IConfigManager;
+import appeng.fluids.helper.IConfigurableFluidInventory;
+import appeng.fluids.parts.PartFluidLevelEmitter;
+import appeng.fluids.util.AEFluidInventory;
+import appeng.helpers.IPriorityHost;
+import appeng.parts.automation.PartLevelEmitter;
+import appeng.tile.inventory.AppEngInternalAEInventory;
+import appeng.util.SettingsFrom;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
+import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
 
@@ -28,6 +44,7 @@ import thaumicenergistics.util.inventory.ThEUpgradeInventory;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author BrockWS
@@ -192,5 +209,113 @@ public abstract class PartSharedEssentiaBus extends PartBase implements IGridTic
             if(this.lastRedstone && this.canWork() && this.getRSMode() == RedstoneMode.SIGNAL_PULSE)
                 this.doWork();
         }
+    }
+
+    public void uploadSettings(final SettingsFrom from, final NBTTagCompound compound, EntityPlayer player) {
+        if (compound != null) {
+            final IConfigManager cm = this.getConfigManager();
+            if (cm != null) {
+                cm.readFromNBT(compound);
+            }
+        }
+
+        if (this instanceof IPriorityHost) {
+            final IPriorityHost pHost = (IPriorityHost) this;
+            pHost.setPriority(compound.getInteger("priority"));
+        }
+
+        EssentiaFilter target = this.config;
+        EssentiaFilter tmp = new EssentiaFilter(target.getSlots());
+
+        tmp.deserializeNBT(compound);
+        for (int x = 0; x < tmp.getSlots(); x++) {
+            target.setAspect(tmp.getAspect(x), x);
+        }
+    }
+
+    protected NBTTagCompound downloadSettings(final SettingsFrom from) {
+        final NBTTagCompound output = new NBTTagCompound();
+
+        final IConfigManager cm = this.getConfigManager();
+        if (cm != null) {
+            cm.writeToNBT(output);
+        }
+
+        if (this instanceof IPriorityHost) {
+            final IPriorityHost pHost = (IPriorityHost) this;
+            output.setInteger("priority", pHost.getPriority());
+        }
+
+        return this.config.serializeNBT();
+    }
+
+    public boolean useStandardMemoryCard() {
+        return true;
+    }
+
+    protected boolean useMemoryCard(final EntityPlayer player) {
+        final ItemStack memCardIS = player.inventory.getCurrentItem();
+
+        if (!memCardIS.isEmpty() && this.useStandardMemoryCard() && memCardIS.getItem() instanceof IMemoryCard) {
+            final IMemoryCard memoryCard = (IMemoryCard) memCardIS.getItem();
+
+            ItemStack is = this.getItemStack(PartItemStack.NETWORK);
+
+            // Blocks and parts share the same soul!
+            final IDefinitions definitions = AEApi.instance().definitions();
+            if (definitions.parts().iface().isSameAs(is)) {
+                Optional<ItemStack> iface = definitions.blocks().iface().maybeStack(1);
+                if (iface.isPresent()) {
+                    is = iface.get();
+                }
+            }
+
+            final String name = is.getItem().getUnlocalizedNameInefficiently(is);
+
+            if (player.isSneaking()) {
+                final NBTTagCompound data = this.downloadSettings(SettingsFrom.MEMORY_CARD);
+                if (data != null) {
+                    memoryCard.setMemoryCardContents(memCardIS, name, data);
+                    memoryCard.notifyUser(player, MemoryCardMessages.SETTINGS_SAVED);
+                }
+            } else {
+                final String storedName = memoryCard.getSettingsName(memCardIS);
+                final NBTTagCompound data = memoryCard.getData(memCardIS);
+                if (name.equals(storedName)) {
+                    this.uploadSettings(SettingsFrom.MEMORY_CARD, data, player);
+                    memoryCard.notifyUser(player, MemoryCardMessages.SETTINGS_LOADED);
+                } else {
+                    memoryCard.notifyUser(player, MemoryCardMessages.INVALID_MACHINE);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onActivate(EntityPlayer entityPlayer, EnumHand enumHand, Vec3d vec3d) {
+        if (this.useMemoryCard(entityPlayer)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean onShiftActivate(EntityPlayer entityPlayer, EnumHand enumHand, Vec3d vec3d) {
+        if (this.useMemoryCard(entityPlayer)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean onClicked(EntityPlayer player, EnumHand hand, Vec3d pos) {
+        if (this.useMemoryCard(player)) {
+            return true;
+        }
+        return super.onClicked(player, hand, pos);
     }
 }

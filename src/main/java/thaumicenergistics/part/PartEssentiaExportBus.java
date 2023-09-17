@@ -132,6 +132,9 @@ public class PartEssentiaExportBus extends PartSharedEssentiaBus {
         if ((player.isSneaking() && AEUtil.isWrench(player.getHeldItem(hand), player, this.getTile().getPos())))
             return false;
 
+        if (this.useMemoryCard(player))
+            return true;
+
         if (ForgeUtil.isServer())
             GuiHandler.openGUI(ModGUIs.ESSENTIA_EXPORT_BUS, player, this.hostTile.getPos(), this.side);
 
