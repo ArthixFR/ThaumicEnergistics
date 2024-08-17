@@ -34,6 +34,10 @@ public class EssentiaFilter implements INBTSerializable<NBTTagCompound>, Iterabl
         return this.aspects[slot];
     }
 
+    public int getSlots() {
+        return this.aspects.length;
+    }
+
     public boolean isInFilter(Aspect aspect) {
         return this.isInFilter(aspect.getTag());
     }

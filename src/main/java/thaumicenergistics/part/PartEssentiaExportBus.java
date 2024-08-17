@@ -48,7 +48,7 @@ public class PartEssentiaExportBus extends PartSharedEssentiaBus {
     // FIXME: Remove after issue fixed in TC.
     // https://github.com/Nividica/ThaumicEnergistics/issues/361
     // https://github.com/Azanor/thaumcraft-beta/issues/1604
-    private boolean reportedWarning = false;
+//    private boolean reportedWarning = false;
 
     public PartEssentiaExportBus(ItemEssentiaExportBus item) {
         super(item);
@@ -85,25 +85,27 @@ public class PartEssentiaExportBus extends PartSharedEssentiaBus {
                     // Simulate extract from ae2
                     IAEEssentiaStack extracted = storage.extractItems(AEUtil.getAEStackFromAspect(aspect, this.calculateAmountToSend()), Actionable.SIMULATE, this.source);
                     // Try add to container, since we can't simulate it
-                    int notAdded;
+                    int notAdded = container.addToContainer(extracted.getAspect(), (int) extracted.getStackSize());
                     // FIXME: Remove after issue fixed in TC.
                     // https://github.com/Nividica/ThaumicEnergistics/issues/361
                     // https://github.com/Azanor/thaumcraft-beta/issues/1604
-                    try {
-                        notAdded = container.addToContainer(extracted.getAspect(), (int) extracted.getStackSize());
-                    } catch (NullPointerException ignored) {
-                        if (!reportedWarning)
-                            ThELog.warn("container.addToContainer threw a NullPointerException. Thaumcraft Bug. Nividica/ThaumicEnergistics#361. Remove EssentiaExportBus from {}", this.hostTile != null ? this.hostTile.getPos() : this.getConnectedTE().getPos());
-                        reportedWarning = true;
-                        return TickRateModulation.IDLE;
-                    }
-                    reportedWarning = false;
+//                    try {
+//                        notAdded = container.addToContainer(extracted.getAspect(), (int) extracted.getStackSize());
+//                    } catch (NullPointerException ignored) {
+//                        if (!reportedWarning)
+//                            ThELog.warn("container.addToContainer threw a NullPointerException. Thaumcraft Bug. Nividica/ThaumicEnergistics#361. Remove EssentiaExportBus from {}", this.hostTile != null ? this.hostTile.getPos() : this.getConnectedTE().getPos());
+//                        reportedWarning = true;
+//                        return TickRateModulation.SAME;
+//                    }
+//                    reportedWarning = false;
                     // Couldn't contain it all
                     extracted.decStackSize(notAdded);
 
                     if (extracted.getStackSize() == 0) {
                         continue;
                     }
+
+                    //ThELog.info("EssentiaExportBus at {} can add {} of {}", this.hostTile != null ? this.hostTile.getPos() : this.getConnectedTE().getPos(), extracted.getStackSize(), extracted.getAspect().getName());
 
                     // Only remove from system the amount the container accepted
                     storage.extractItems(extracted, Actionable.MODULATE, this.source);

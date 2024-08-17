@@ -122,7 +122,9 @@ public class AEEssentiaStack implements IAEEssentiaStack, Comparable<AEEssentiaS
 
     @Override
     public void incStackSize(long l) {
-        this.setStackSize(min(Integer.MAX_VALUE, this.getStackSize() + l));
+//        if (this.getStackSize() + l > Integer.MAX_VALUE) this.setStackSize(Integer.MAX_VALUE);
+        this.setStackSize(this.getStackSize() + l > Integer.MAX_VALUE ? Integer.MAX_VALUE : this.getStackSize() + l);
+//        this.setStackSize(min(Integer.MAX_VALUE, this.getStackSize() + l));
     }
 
     @Override
